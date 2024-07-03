@@ -34,7 +34,7 @@ def main():
         - How many unique products are there?
         - What is the average price of products?
     """)
-
+    max_tokens = st.sidebar.slider("Max Tokens", min_value=500, max_value=3000, value=1500, step=100)
     if user_excel is not None:
         st.subheader("Ask a Question About Your Excel Data")
         user_question = st.text_input("What do you want to know from your Excel?")
@@ -42,32 +42,34 @@ def main():
         if user_question:
             # Display the user's question
             st.write(f'**You asked:** {user_question}')
-
+            try:
             # Read the Excel file into a DataFrame
-            df = pd.read_excel(user_excel, sheet_name=None)
+                df = pd.read_excel(user_excel, sheet_name=None)
 
-            # Combine all sheets into one DataFrame
-            combined_df = pd.concat(df.values(), ignore_index=True)
+                # Combine all sheets into one DataFrame
+                combined_df = pd.concat(df.values(), ignore_index=True)
 
-            # Initialize the AI model
-            llm = AzureChatOpenAI(
-                azure_deployment="gpt-4",
-                openai_api_version="2023-05-15",
-                azure_endpoint="https://aibcp4.openai.azure.com/",
-                max_tokens=1400,
-                api_key="a9b5778f059648b7863c397ff8f8248a",
-            )
+                # Initialize the AI model
+                llm = AzureChatOpenAI(
+                    azure_deployment="gpt-4",
+                    openai_api_version="2023-05-15",
+                    azure_endpoint="https://aibcp4.openai.azure.com/",
+                    max_tokens=max_tokens,
+                    api_key="a9b5778f059648b7863c397ff8f8248a",
+                )
 
-            # Create a Pandas DataFrame agent
-            agent = create_pandas_dataframe_agent(llm=llm, df=combined_df, verbose=True,allow_dangerous_code=True)
+                # Create a Pandas DataFrame agent
+                agent = create_pandas_dataframe_agent(llm=llm, df=combined_df, verbose=True,allow_dangerous_code=True)
 
-            # Get the response from the agent
-            with st.spinner('Analyzing your data...'):
-                response = agent.run(user_question)
+                # Get the response from the agent
+                with st.spinner('Analyzing your data...'):
+                    response = agent.run(user_question)
 
-            # Display the response
-            st.success("Here is the answer:")
-            st.write(response)
+                # Display the response
+                st.success("Here is the answer:")
+                st.write(response)
+            except Exception as e:
+                st.error(f"An error occurred while processing the file: {str(e)}")
         else:
             st.info("Please enter a question to get an answer.")
 
